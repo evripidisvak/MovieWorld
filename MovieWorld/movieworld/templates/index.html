@@ -1,0 +1,78 @@
+{% load spurl %}
+{% block headEnd %}
+{% endblock %}
+
+{% block main %}
+<h1>Movie World</h1>
+sort: {{sort}}
+<br>
+user_filter: {{user_filter}}
+<hr>
+{% if user.is_authenticated %}
+    <p>Welcome back  {{user.get_full_name}}</p>
+    <a href="{% url 'logout' %}">Log out</a>
+    <a href="{% url 'add_movie' %}">New Movie</a>
+{% else %}
+    <a href="{% url 'login' %}">Log in</a>
+    <a href="{% url 'register'  %}">Sign Up</a>
+{% endif %}
+<hr>
+<p>Found {{movie_count}} movies</p>
+<hr>
+
+<a href="{% url 'index' sort='l' %}">Sort By Likes</a>
+<a href="{% url 'index' sort='h' %}">Sort By Hates</a>
+<a href="{% url 'index' sort='d' %}">Sort By Date</a>
+<br>
+{% if sort != None %}
+    {% if user_filter != None %}
+    <a href="{% url 'index' user=user_filter  %}">Clear Sorting</a>
+    {% else %}
+    <a href="{% url 'index'  %}">Clear Sorting</a>
+    {% endif %}
+{% endif %}
+
+{% if user_filter != None %}
+    {% if sort != None %}
+    <a href="{% url 'index' sort=sort  %}">Clear User Filtering</a>
+    {% else %}
+    <a href="{% url 'index'  %}">Clear User Filtering</a>
+    {% endif %}
+{% endif %}
+<a href="{% spurl base="http://example.com" add_query="foo={{ bar }}" %}">dsdfsdfsd</a>
+<div id="movies">
+    {% for movie in movies %}
+        <p>{{movie.title}}</p>
+        <p>{{movie.description}}</p>
+        {% if movie.user == user %}
+            <p>Posted by You</p>
+            <p> Posted by <a href="{% url_replace 'u' user.id  %}" >You</a></p>
+        {% else %}
+            <p> Posted by <a href="{% url 'index' user=movie.user_id  %}" >{{movie.user.get_full_name}}</a></p>
+        {% endif %}
+        <p>{{movie.date}}</p>
+        <p>{{movie.likes}} Likes</p>
+        <p>{{movie.hates}} Hates</p>
+        {% if movie.user != user %}
+            {% if movie.user_opinion == True %}
+                <span style="font-weight:bold;">
+            {% else %}
+                <span>
+            {% endif %}
+            <p>Like</p>
+            </span>
+    
+            {% if movie.user_opinion == False %}
+                <span style="font-weight:bold;">
+            {% else %}
+                <span>
+            {% endif %}
+            <p>Hate</p>
+            </span>
+        {% endif %}
+    
+        <p>{{movie.user_opinion}}</p>
+        <hr>
+    {% endfor %}
+</div>
+{% endblock %}
