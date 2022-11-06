@@ -46,7 +46,7 @@ user_filter: {{user_filter}}
         <p>{{movie.description}}</p>
         {% if movie.user == user %}
             <p>Posted by You</p>
-            <p> Posted by <a href="{% url_replace 'u' user.id  %}" >You</a></p>
+            <p> Posted by <a href="{% url 'index' user=user.id  %}" >You</a></p>
         {% else %}
             <p> Posted by <a href="{% url 'index' user=movie.user_id  %}" >{{movie.user.get_full_name}}</a></p>
         {% endif %}
