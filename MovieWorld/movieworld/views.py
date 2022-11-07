@@ -17,18 +17,23 @@ class Index(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(Index, self).get_context_data(**kwargs)
         # print(f"{self.request.get_full_path() = }")
-        # print(f"{self.request. = }")
+        # print(f"{self.request.GET.dict() = }")
+        # print(f"{kwargs = }")
 
+        param_dict = self.request.GET.dict()
+        # print(f"{param_dict = }")
         user_filter = None
         sort = None
-        if kwargs:
-            # print(f"{kwargs = }")
-            if kwargs.get("user"):
-                user_filter = kwargs["user"]
-            if kwargs.get("sort"):
-                sort = kwargs["sort"]
 
+        if param_dict:
+            if "u" in param_dict.keys():
+                user_filter = param_dict["u"]
+            if "s" in param_dict.keys():
+                sort = param_dict["s"]
+        # print(f"{user_filter = }")
         user = self.request.user
+        # print(f"{sort = }")
+        # print(f"{user_filter = }")
 
         movies = Movie.objects.all().annotate(
             likes=Count("opinion", filter=Q(opinion__like=True)),
@@ -48,12 +53,13 @@ class Index(TemplateView):
 
         movies_count = len(movies)
 
-        # This is disgustingly inefficient
         user_opinions = Opinion.objects.filter(user=user.id)
         for opinion in user_opinions:
-            for movie in movies:
-                if opinion.movie.id == movie.id:
-                    movie.user_opinion = opinion.like
+            try:
+                tmp = movies.get(id=opinion.movie_id)
+                tmp.user_opinion = opinion.like
+            except:
+                pass
 
         context.update(
             {
@@ -100,3 +106,8 @@ class MovieCreateView(CreateView):
 
     def get_success_url(self):
         return reverse("index")
+
+
+def movie_vote(request):
+    if request.method == "POST":
+        print(f"{request.POST = }")

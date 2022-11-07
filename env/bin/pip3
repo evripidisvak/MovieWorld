@@ -1,4 +1,4 @@
-#!/home/evripidis/Documents/Arxeio/travelstaytion/MovieWorld/env/bin/python3
+#!/home/daserver/Documents/Task/MovieWorld/env/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

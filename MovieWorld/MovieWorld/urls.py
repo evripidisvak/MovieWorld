@@ -20,10 +20,25 @@ from movieworld import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", views.Index.as_view(), name="index"),
-    path("u=<str:user>&s=<str:sort>", views.Index.as_view(), name="index"),
-    path("u=<str:user>", views.Index.as_view(), name="index"),
-    path("s=<str:sort>", views.Index.as_view(), name="index"),
     path("accounts/", include("django.contrib.auth.urls")),
     path("register/", views.Register.as_view(), name="register"),
     path("add_movie/", views.MovieCreateView.as_view(), name="add_movie"),
 ]
+
+filter_urlpatterns = [
+    path("?u=<str:user>&s=<str:sort>", views.Index.as_view(), name="index"),
+    path("?u=<str:user>", views.Index.as_view(), name="index"),
+    path("?s=<str:sort>", views.Index.as_view(), name="index"),
+]
+
+urlpatterns += filter_urlpatterns
+
+htmx_urlpatterns = [
+    path(
+        "movie_vote/",
+        views.movie_vote,
+        name="movie_vote",
+    ),
+]
+
+urlpatterns += htmx_urlpatterns
