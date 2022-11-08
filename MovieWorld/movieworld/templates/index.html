@@ -4,6 +4,10 @@
 {% endblock %}
 
 {% block main %}
+<style>
+    .marked {font-weight: bold;}
+</style>
+
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 <h1>Movie World</h1>
 {% if user.is_authenticated %}
@@ -36,6 +40,7 @@
 
 <div id="movies">
     {% for movie in movies %}
+    <div class="movie_elem" id="{{movie.id}}" >
         <p>{{movie.title}}</p>
         <p>{{movie.description}}</p>
         {% if movie.user == user %}
@@ -44,29 +49,78 @@
             <p> Posted by <a href="{% spurl path=request.get_full_path set_query="u={{movie.user_id}}" %}" >{{movie.user.get_full_name}}</a></p>
         {% endif %}
         <p>{{movie.date}}</p>
-        <p>{{movie.likes}} Likes</p>
-        <p>{{movie.hates}} Hates</p>
-        {% if movie.user != user %}
-            {% if movie.user_opinion == True %}
-                <span style="font-weight:bold; background:#f1f1f1;" name="like" hx-post="/movie_vote/" hx-trigger="click" >
-            {% else %}
-                <span style="background:#f1f1f1;" name="like" hx-post="/movie_vote/" hx-trigger="click" >
-            {% endif %}
-            <p style="background:inherit;">Like</p>
-            </span>
+        <p class="likes_count">{{movie.likes}} Likes</p>
+        <p class="hates_count">{{movie.hates}} Hates</p>
+        <div class="vote_buttons">
+            {% if movie.user != user %}
+                <div style="background:#f1f1f1;" class="like" hx-post="/movie_vote/" hx-trigger="click" hx-swap="none">
+                    {% if movie.user_opinion == True %}
+                        <span class="marked"" >
+                    {% else %}
+                        <span>
+                    {% endif %}
+                    <p style="background:inherit;">Like</p>
+                    </span>
+                </div>
 
-            {% if movie.user_opinion == False %}
-                <span style="font-weight:bold;">
-            {% else %}
-                <span>
+                <div style="background:#f1f1f1;" class="hate" hx-post="/movie_vote/" hx-trigger="click" hx-swap="none">
+                    {% if movie.user_opinion == False %}
+                        <span class="marked"">
+                    {% else %}
+                        <span>
+                    {% endif %}
+                    <p>Hate</p>
+                    </span>
+                </div>
             {% endif %}
-            <p>Hate</p>
-            </span>
-        {% endif %}
+        </div>
 
         <p>{{movie.user_opinion}}</p>
         <hr>
+    </div>
     {% endfor %}
 </div>
+
+<script>
+    // Prepare the data to send
+    document.body.addEventListener('htmx:configRequest', function(evt) {
+        test = evt;
+        //console.log(evt);
+        if (evt.target.parentElement.classList.contains('vote_buttons')){
+            evt.detail.parameters['movie_id'] = test.target.parentElement.parentElement.id; // add a new parameter into the mix
+            evt.detail.parameters['vote_type'] = evt.target.className; // add a new parameter into the mix
+        }
+    });
+
+    // What should i do with the response from the server?
+    document.body.addEventListener('htmx:afterRequest', function (evt) {
+        response_text = evt.detail.xhr.response;
+        response = JSON.parse(response_text);
+
+        movie_elem = document.getElementById(response.movie_id);
+        likes_count = movie_elem.querySelector('.likes_count');
+        hates_count = movie_elem.querySelector('.hates_count');
+        vote_buttons = movie_elem.querySelector('.vote_buttons');
+
+        likes_count.innerText = response.likes_count + " Likes"
+        hates_count.innerText = response.hates_count + " Hates"
+
+        if (response.modification == 'deleted'){
+            vote_buttons.querySelector('.like').children[0].classList.remove("marked");
+            vote_buttons.querySelector('.hate').children[0].classList.remove("marked");
+        } if (response.modification == 'created'){
+            if (response.current_opinion){
+                vote_buttons.querySelector('.like').children[0].classList.add("marked");
+            } else {
+                vote_buttons.querySelector('.hate').children[0].classList.add("marked");
+            }
+        } if (response.modification == 'toggled'){
+            vote_buttons.querySelector('.like').children[0].classList.toggle("marked");
+            vote_buttons.querySelector('.hate').children[0].classList.toggle("marked");
+        }
+    });
+
+</script>
+
 </body>
 {% endblock %}

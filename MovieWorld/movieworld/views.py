@@ -1,11 +1,13 @@
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import UserCreationForm
-from django.db.models import Count, F, Q, Subquery
+from django.db.models import Count, F, Q, Subquery, OuterRef
 from django.shortcuts import render
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
+import pandas as pd
 
 from .forms import *
 from .models import *
@@ -16,12 +18,8 @@ class Index(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(Index, self).get_context_data(**kwargs)
-        # print(f"{self.request.get_full_path() = }")
-        # print(f"{self.request.GET.dict() = }")
-        # print(f"{kwargs = }")
 
         param_dict = self.request.GET.dict()
-        # print(f"{param_dict = }")
         user_filter = None
         sort = None
 
@@ -30,14 +28,17 @@ class Index(TemplateView):
                 user_filter = param_dict["u"]
             if "s" in param_dict.keys():
                 sort = param_dict["s"]
-        # print(f"{user_filter = }")
+
         user = self.request.user
-        # print(f"{sort = }")
-        # print(f"{user_filter = }")
 
         movies = Movie.objects.all().annotate(
             likes=Count("opinion", filter=Q(opinion__like=True)),
             hates=Count("opinion", filter=Q(opinion__like=False)),
+            user_opinion=Subquery(
+                Opinion.objects.filter(
+                    user__id=user.id, movie__id=OuterRef("id")
+                ).values("like")
+            ),
         )
 
         if user_filter is not None:
@@ -53,14 +54,6 @@ class Index(TemplateView):
 
         movies_count = len(movies)
 
-        user_opinions = Opinion.objects.filter(user=user.id)
-        for opinion in user_opinions:
-            try:
-                tmp = movies.get(id=opinion.movie_id)
-                tmp.user_opinion = opinion.like
-            except:
-                pass
-
         context.update(
             {
                 "user": user,
@@ -73,21 +66,6 @@ class Index(TemplateView):
         )
 
         return context
-
-
-# def logout_view(request):
-#     logout(request)
-#     return HttpResponseRedirect(settings.LOGIN_URL)
-
-
-# def login_view(request):
-#     login(request)
-#     return HttpResponseRedirect(settings.LOGIN_URL)
-
-
-# def register_view(request):
-#     login(request)
-#     return HttpResponseRedirect(settings.LOGIN_URL)
 
 
 class Register(CreateView):
@@ -110,4 +88,45 @@ class MovieCreateView(CreateView):
 
 def movie_vote(request):
     if request.method == "POST":
-        print(f"{request.POST = }")
+        user = request.user
+        vote_type = request.POST.get("vote_type")
+        movie_id = request.POST.get("movie_id")
+
+        if vote_type == "like":
+            vote = True
+        else:
+            vote = False
+
+        # Get user opinion on the movie if it exists
+        try:
+            opinion = Opinion.objects.get(movie__id=movie_id, user=user)
+        except:
+            opinion = None
+
+        # Update, create or delete user opinion
+        if opinion is None or (opinion is not None and opinion.like != vote):
+            opinion, created = Opinion.objects.update_or_create(
+                movie=Movie.objects.get(id=movie_id), user=user, defaults={"like": vote}
+            )
+            modification = "created" if created else "toggled"
+            current_opinion = opinion.like
+        else:
+            opinion.delete()
+            modification = "deleted"
+            current_opinion = None
+
+        movie_opinions = Opinion.objects.filter(movie__id=movie_id)
+
+        movie_opinions_df = pd.DataFrame.from_records(
+            movie_opinions.values(), columns=["id", "movie_id", "user_id", "like"]
+        )
+        counts = movie_opinions_df["like"].value_counts()
+
+        response_data = {}
+        response_data["movie_id"] = movie_id
+        response_data["likes_count"] = str(counts.get(True, 0))
+        response_data["hates_count"] = str(counts.get(False, 0))
+        response_data["modification"] = modification
+        response_data["current_opinion"] = current_opinion
+
+        return JsonResponse(response_data, safe=False)
