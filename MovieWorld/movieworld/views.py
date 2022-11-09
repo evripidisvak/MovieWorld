@@ -91,6 +91,7 @@ def movie_vote(request):
         user = request.user
         vote_type = request.POST.get("vote_type")
         movie_id = request.POST.get("movie_id")
+        print(f"{movie_id = }")
 
         if vote_type == "like":
             vote = True

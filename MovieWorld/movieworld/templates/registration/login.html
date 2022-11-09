@@ -4,11 +4,12 @@
   <div class="row align-items-center vh-100">
     <div class="login_form">
       <h1>Login</h1>
-      <form method="post">
+      <form method="post" class="mb-3">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit" class="btn btn-primary">Login</button>
       </form>
+      <a class="btn btn-secondary" role="button" href="{% url 'index' %}">Back to Homepage</a>
     </div>
   </div>
 </div>

@@ -1,65 +1,14 @@
-/* body {
-    max-width: 1000px;
-    margin: 0 auto;
-    font-family: 'Roboto Slab', serif;
-}
-
-h1 {
-    float: left;
-}
-
-#subtitle {
-    clear: both;
-}
-
-#login_links {
-    font-size: 20px;
-    float: right;
-    margin-top: 30px;
-}
-
-#login {
-    color: #00adef;
-    text-decoration: none;
-}
-
-#signup {
-    background-color: #00adef;
-    border: 2px solid #000;
-    border-radius: 15px;
-    padding: 5px 20px;
-    color: #fff;
-    text-decoration: none;
-}
-
-#filters {
-    float: right;
-    background: #d6d6d6;
-    border: 2px solid #000;
-    border-radius: 10px;
-    padding: 10px;
-}
-
-#filter_title {
-    margin-top: 0;
-}
-
-.filter_links {
-    display: block;
-    padding: 10px;
-}
-
-.movie_elem {
-    border: 2px solid #000;
-    border-radius: 10px;
-    margin: 10px 0;
-    padding: 10px;
-} */
-
+.helptext,
+.sign_form label,
+.new_movie_form label,
 .login_form label {
     display: block;
 }
 
-.marked {
-    font-weight: bold;
+.helptext {
+    color: gray;
+}
+
+.errorlist {
+    color: red;
 }

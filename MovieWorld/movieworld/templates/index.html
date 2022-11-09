@@ -9,9 +9,8 @@
             <div class="col-6 text-end fs-4">
                 {% if user.is_authenticated %}
                 <span id="logged_links">
-                    <p>Welcome back {{user.get_full_name}}</p>
-                    <a href="{% url 'logout' %}">Log out</a>
-                    <a href="{% url 'add_movie' %}">New Movie</a>
+                    <p class="mb-0">Welcome back {{user.get_full_name}}</p>
+                    <a class="btn btn-secondary" role="button" href="{% url 'logout' %}">Log Out</a>
                 </span>
                 {% else %}
                 <span id="login_links">
@@ -33,7 +32,7 @@
             <div class="col-10">
                 <div id="movies">
                     {% for movie in movies %}
-                    <div class="movie_elem mb-3 border border-3 border-secondary rounded" id="{{movie.id}}" >
+                    <div class="movie_elem mb-3 border border-3 border-secondary rounded p-2" id="{{movie.id}}" >
                         <div class="container">
                             <div class="row">
                                 <div class="col-8">
@@ -60,25 +59,25 @@
 
                                 <div class="col-5 text-center">
                                     {% if user.is_authenticated %}
-                                    <div class="vote_buttons">
+                                    <div class="vote_buttons nav nav-pills justify-content-center">
                                         {% if movie.user != user %}
                                             <div class="like" hx-post="/movie_vote/" hx-trigger="click" hx-swap="none">
                                                 {% if movie.user_opinion == True %}
-                                                    <span class="marked" >
+                                                    <span class="nav-link active" role="button">
                                                 {% else %}
-                                                    <span>
+                                                    <span class="nav-link" role="button">
                                                 {% endif %}
-                                                <p style="background:inherit;">Like</p>
+                                                <a>Like</a>
                                                 </span>
                                             </div>
 
                                             <div class="hate" hx-post="/movie_vote/" hx-trigger="click" hx-swap="none">
                                                 {% if movie.user_opinion == False %}
-                                                    <span class="marked">
+                                                    <span class="nav-link active" role="button">
                                                 {% else %}
-                                                    <span>
+                                                    <span class="nav-link" role="button">
                                                 {% endif %}
-                                                <p>Hate</p>
+                                                <a>Hate</a>
                                                 </span>
                                             </div>
                                         {% endif %}
@@ -101,6 +100,11 @@
 
             </div>
             <div class="col-2">
+                {% if user.is_authenticated %}
+                <div class="d-grid mb-3">
+                    <a class="btn btn-success" role="button" href="{% url 'add_movie' %}">New Movie</a>
+                </div>
+                {% endif %}
                 <div id="filters" class="border border-3 border-secondary rounded bg-light fs-5 text-center nav nav-pills flex-column p-2">
                     <p id="filter_title">Sort By:</p>
                     <a class="filter_links nav-link" id="sort_by_likes" href="{% spurl path=request.get_full_path set_query="s=l" %}">Likes</a>
@@ -133,9 +137,8 @@
     <script>
         // Prepare the data to send
         document.body.addEventListener('htmx:configRequest', function(evt) {
-            test = evt;
             if (evt.target.parentElement.classList.contains('vote_buttons')){
-                evt.detail.parameters['movie_id'] = test.target.parentElement.parentElement.id; // add a new parameter into the mix
+                evt.detail.parameters['movie_id'] = evt.target.parentElement.parentElement.parentElement.parentElement.parentElement.id; // add a new parameter into the mix
                 evt.detail.parameters['vote_type'] = evt.target.className; // add a new parameter into the mix
             }
         });
@@ -154,17 +157,17 @@
             hates_count.innerText = response.hates_count + " Hates"
 
             if (response.modification == 'deleted'){
-                vote_buttons.querySelector('.like').children[0].classList.remove("marked");
-                vote_buttons.querySelector('.hate').children[0].classList.remove("marked");
+                vote_buttons.querySelector('.like').children[0].classList.remove("active");
+                vote_buttons.querySelector('.hate').children[0].classList.remove("active");
             } if (response.modification == 'created'){
                 if (response.current_opinion){
-                    vote_buttons.querySelector('.like').children[0].classList.add("marked");
+                    vote_buttons.querySelector('.like').children[0].classList.add("active");
                 } else {
-                    vote_buttons.querySelector('.hate').children[0].classList.add("marked");
+                    vote_buttons.querySelector('.hate').children[0].classList.add("active");
                 }
             } if (response.modification == 'toggled'){
-                vote_buttons.querySelector('.like').children[0].classList.toggle("marked");
-                vote_buttons.querySelector('.hate').children[0].classList.toggle("marked");
+                vote_buttons.querySelector('.like').children[0].classList.toggle("active");
+                vote_buttons.querySelector('.hate').children[0].classList.toggle("active");
             }
         });
 
