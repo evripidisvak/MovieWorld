@@ -16,6 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from movieworld import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -25,6 +27,8 @@ urlpatterns = [
     path("add_movie/", views.MovieCreateView.as_view(), name="add_movie"),
 ]
 
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
 filter_urlpatterns = [
     path("?u=<str:user>&s=<str:sort>", views.Index.as_view(), name="index"),
     path("?u=<str:user>", views.Index.as_view(), name="index"),
@@ -32,6 +36,7 @@ filter_urlpatterns = [
 ]
 
 urlpatterns += filter_urlpatterns
+
 
 htmx_urlpatterns = [
     path(

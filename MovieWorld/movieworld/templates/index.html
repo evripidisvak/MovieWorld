@@ -1,126 +1,181 @@
+{% extends 'base.html' %}
 {% load spurl %}
-{% block headEnd %}
-<script src="https://unpkg.com/htmx.org@1.8.4"></script>
-{% endblock %}
-
 {% block main %}
-<style>
-    .marked {font-weight: bold;}
-</style>
-
-<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-<h1>Movie World</h1>
-{% if user.is_authenticated %}
-    <p>Welcome back {{user.get_full_name}}</p>
-    <a href="{% url 'logout' %}">Log out</a>
-    <a href="{% url 'add_movie' %}">New Movie</a>
-{% else %}
-    <a href="{% url 'login' %}">Log in</a>
-    <a href="{% url 'register' %}">Sign Up</a>
-{% endif %}
-<hr>
-<p>Found {{movie_count}} movies</p>
-<hr>
-
-<a href="{% spurl path=request.get_full_path set_query="s=l" %}">Sort By Likes</a>
-<a href="{% spurl path=request.get_full_path set_query="s=h" %}">Sort By Hates</a>
-<a href="{% spurl path=request.get_full_path set_query="s=d" %}">Sort By Date</a>
-<br>
-{% if sort != None %}
-    <a href="{% spurl path=request.get_full_path remove_query_param="s" %}">Clear Sorting</a>
-{% endif %}
-
-{% if user_filter != None %}
-    <a href="{% spurl path=request.get_full_path remove_query_param="u" %}">Clear User Filtering</a>
-{% endif %}
-
-{% if user_filter != None and sort != None %}
-    <a href="{% url 'index' %}">Clear Sorting and Filtering</a>
-{% endif %}
-
-<div id="movies">
-    {% for movie in movies %}
-    <div class="movie_elem" id="{{movie.id}}" >
-        <p>{{movie.title}}</p>
-        <p>{{movie.description}}</p>
-        {% if movie.user == user %}
-            <p> Posted by <a href="{% spurl path=request.get_full_path set_query="u={{user.id}}" %}" >You</a></p>
-        {% else %}
-            <p> Posted by <a href="{% spurl path=request.get_full_path set_query="u={{movie.user_id}}" %}" >{{movie.user.get_full_name}}</a></p>
-        {% endif %}
-        <p>{{movie.date}}</p>
-        <p class="likes_count">{{movie.likes}} Likes</p>
-        <p class="hates_count">{{movie.hates}} Hates</p>
-        <div class="vote_buttons">
-            {% if movie.user != user %}
-                <div style="background:#f1f1f1;" class="like" hx-post="/movie_vote/" hx-trigger="click" hx-swap="none">
-                    {% if movie.user_opinion == True %}
-                        <span class="marked"" >
-                    {% else %}
-                        <span>
-                    {% endif %}
-                    <p style="background:inherit;">Like</p>
-                    </span>
-                </div>
-
-                <div style="background:#f1f1f1;" class="hate" hx-post="/movie_vote/" hx-trigger="click" hx-swap="none">
-                    {% if movie.user_opinion == False %}
-                        <span class="marked"">
-                    {% else %}
-                        <span>
-                    {% endif %}
-                    <p>Hate</p>
-                    </span>
-                </div>
-            {% endif %}
+    <div class="container">
+        <div class="row mt-3">
+            <div class="col-6">
+                <h1>Movie World</h1>
+            </div>
+            <div class="col-6 text-end fs-4">
+                {% if user.is_authenticated %}
+                <span id="logged_links">
+                    <p>Welcome back {{user.get_full_name}}</p>
+                    <a href="{% url 'logout' %}">Log out</a>
+                    <a href="{% url 'add_movie' %}">New Movie</a>
+                </span>
+                {% else %}
+                <span id="login_links">
+                    <a id='login' class="text-decoration-none" href="{% url 'login' %}">Log in</a>
+                    or
+                    <a id='signup' class="text-decoration-none bg-primary text-white p-2 rounded" href="{% url 'register' %}">Sign Up</a>
+                </span>
+                {% endif %}
+            </div>
         </div>
 
-        <p>{{movie.user_opinion}}</p>
-        <hr>
+        <div class="row">
+            <div class="col-12" id="subtitle">
+                <p>Found {{movie_count}} movies</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-10">
+                <div id="movies">
+                    {% for movie in movies %}
+                    <div class="movie_elem mb-3 border border-3 border-secondary rounded" id="{{movie.id}}" >
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-8">
+                                    <p class="fs-3">{{movie.title}}</p>
+                                </div>
+                                <div class="col-4 text-end">
+                                    <p>Posted {{movie.date}}</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <p>{{movie.description}}</p>
+                            </div>
+                            <div class="row">
+                                <div class="col-2">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <p class="likes_count">{{movie.likes}} Likes</p>
+                                        </div>
+                                        <div class="col-6">
+                                            <p class="hates_count">{{movie.hates}} Hates</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-5 text-center">
+                                    {% if user.is_authenticated %}
+                                    <div class="vote_buttons">
+                                        {% if movie.user != user %}
+                                            <div class="like" hx-post="/movie_vote/" hx-trigger="click" hx-swap="none">
+                                                {% if movie.user_opinion == True %}
+                                                    <span class="marked" >
+                                                {% else %}
+                                                    <span>
+                                                {% endif %}
+                                                <p style="background:inherit;">Like</p>
+                                                </span>
+                                            </div>
+
+                                            <div class="hate" hx-post="/movie_vote/" hx-trigger="click" hx-swap="none">
+                                                {% if movie.user_opinion == False %}
+                                                    <span class="marked">
+                                                {% else %}
+                                                    <span>
+                                                {% endif %}
+                                                <p>Hate</p>
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                                </div>
+
+                                <div class="col-5 text-end">
+                                    {% if movie.user == user %}
+                                        <p> Posted by <a href="{% spurl path=request.get_full_path set_query="u={{user.id}}" %}" >You</a></p>
+                                    {% else %}
+                                        <p> Posted by <a href="{% spurl path=request.get_full_path set_query="u={{movie.user_id}}" %}" >{{movie.user.get_full_name}}</a></p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+            <div class="col-2">
+                <div id="filters" class="border border-3 border-secondary rounded bg-light fs-5 text-center nav nav-pills flex-column p-2">
+                    <p id="filter_title">Sort By:</p>
+                    <a class="filter_links nav-link" id="sort_by_likes" href="{% spurl path=request.get_full_path set_query="s=l" %}">Likes</a>
+                    <a class="filter_links nav-link" id="sort_by_hates" href="{% spurl path=request.get_full_path set_query="s=h" %}">Hates</a>
+                    <a class="filter_links nav-link" id="sort_by_date" href="{% spurl path=request.get_full_path set_query="s=d" %}">Date</a>
+                </div>
+                {% if sort != None %}
+                    <div class="border border-3 border-secondary rounded bg-light fs-5 text-center nav  flex-column p-2 mt-2">
+                        <a class="nav-link" href="{% spurl path=request.get_full_path remove_query_param="s" %}">Clear Sorting</a>
+                    </div>
+                {% endif %}
+
+                {% if user_filter != None %}
+                    <div class="border border-3 border-secondary rounded bg-light fs-5 text-center nav  flex-column p-2 mt-2">
+                        <a class="nav-link" href="{% spurl path=request.get_full_path remove_query_param="u" %}">Clear User Filtering</a>
+                    </div>
+                {% endif %}
+
+                {% if user_filter != None and sort != None %}
+                    <div class="border border-3 border-secondary rounded bg-light fs-5 text-center nav  flex-column p-2 mt-2">
+                        <a class="nav-link" href="{% url 'index' %}">Clear All</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
-    {% endfor %}
-</div>
 
-<script>
-    // Prepare the data to send
-    document.body.addEventListener('htmx:configRequest', function(evt) {
-        test = evt;
-        //console.log(evt);
-        if (evt.target.parentElement.classList.contains('vote_buttons')){
-            evt.detail.parameters['movie_id'] = test.target.parentElement.parentElement.id; // add a new parameter into the mix
-            evt.detail.parameters['vote_type'] = evt.target.className; // add a new parameter into the mix
-        }
-    });
 
-    // What should i do with the response from the server?
-    document.body.addEventListener('htmx:afterRequest', function (evt) {
-        response_text = evt.detail.xhr.response;
-        response = JSON.parse(response_text);
 
-        movie_elem = document.getElementById(response.movie_id);
-        likes_count = movie_elem.querySelector('.likes_count');
-        hates_count = movie_elem.querySelector('.hates_count');
-        vote_buttons = movie_elem.querySelector('.vote_buttons');
-
-        likes_count.innerText = response.likes_count + " Likes"
-        hates_count.innerText = response.hates_count + " Hates"
-
-        if (response.modification == 'deleted'){
-            vote_buttons.querySelector('.like').children[0].classList.remove("marked");
-            vote_buttons.querySelector('.hate').children[0].classList.remove("marked");
-        } if (response.modification == 'created'){
-            if (response.current_opinion){
-                vote_buttons.querySelector('.like').children[0].classList.add("marked");
-            } else {
-                vote_buttons.querySelector('.hate').children[0].classList.add("marked");
+    <script>
+        // Prepare the data to send
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            test = evt;
+            if (evt.target.parentElement.classList.contains('vote_buttons')){
+                evt.detail.parameters['movie_id'] = test.target.parentElement.parentElement.id; // add a new parameter into the mix
+                evt.detail.parameters['vote_type'] = evt.target.className; // add a new parameter into the mix
             }
-        } if (response.modification == 'toggled'){
-            vote_buttons.querySelector('.like').children[0].classList.toggle("marked");
-            vote_buttons.querySelector('.hate').children[0].classList.toggle("marked");
+        });
+
+        // What should i do with the response from the server?
+        document.body.addEventListener('htmx:afterRequest', function (evt) {
+            response_text = evt.detail.xhr.response;
+            response = JSON.parse(response_text);
+
+            movie_elem = document.getElementById(response.movie_id);
+            likes_count = movie_elem.querySelector('.likes_count');
+            hates_count = movie_elem.querySelector('.hates_count');
+            vote_buttons = movie_elem.querySelector('.vote_buttons');
+
+            likes_count.innerText = response.likes_count + " Likes"
+            hates_count.innerText = response.hates_count + " Hates"
+
+            if (response.modification == 'deleted'){
+                vote_buttons.querySelector('.like').children[0].classList.remove("marked");
+                vote_buttons.querySelector('.hate').children[0].classList.remove("marked");
+            } if (response.modification == 'created'){
+                if (response.current_opinion){
+                    vote_buttons.querySelector('.like').children[0].classList.add("marked");
+                } else {
+                    vote_buttons.querySelector('.hate').children[0].classList.add("marked");
+                }
+            } if (response.modification == 'toggled'){
+                vote_buttons.querySelector('.like').children[0].classList.toggle("marked");
+                vote_buttons.querySelector('.hate').children[0].classList.toggle("marked");
+            }
+        });
+
+        current_url = location.search;
+        if (current_url.includes('s=l')) {
+            document.getElementById("sort_by_likes").classList.add("active");
+        } else if (current_url.includes('s=h')) {
+            document.getElementById("sort_by_hates").classList.add("active");
+        } else if (current_url.includes('s=d')) {
+            document.getElementById("sort_by_date").classList.add("active");
         }
-    });
 
-</script>
-
-</body>
-{% endblock %}
+    </script>
+{% endblock main %}
