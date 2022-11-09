@@ -1,5 +1,5 @@
 # MovieWorld
-## Installation instructions
+## How to run this project
 
 Make sure you have installed Python in your computer
 
