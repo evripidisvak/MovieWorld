@@ -47,6 +47,8 @@ python manage.py runserver
 Open a browser at ```http://127.0.0.1:8000/```
 
 
+---
+
 Demo credentials:
 
 Admin account. You can also access the backend at ```http://127.0.0.1:8000/admin```
