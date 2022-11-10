@@ -1,24 +1,22 @@
-from django.contrib.auth import login, logout
-from django.contrib.auth.forms import UserCreationForm
-from django.db.models import Count, F, Q, Subquery, OuterRef
-from django.shortcuts import render
-from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+import pandas as pd
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Count, OuterRef, Q, Subquery
+from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import FormView
-import pandas as pd
 
 from .forms import *
 from .models import *
 
-
+# Home page
 class Index(TemplateView):
     template_name = "index.html"
 
     def get_context_data(self, **kwargs):
         context = super(Index, self).get_context_data(**kwargs)
 
+        # Get any filters or sortings that may already exist
         param_dict = self.request.GET.dict()
         user_filter = None
         sort = None
@@ -31,6 +29,7 @@ class Index(TemplateView):
 
         user = self.request.user
 
+        # Get the movies we need to show
         movies = Movie.objects.all().annotate(
             likes=Count("opinion", filter=Q(opinion__like=True)),
             hates=Count("opinion", filter=Q(opinion__like=False)),
@@ -52,8 +51,10 @@ class Index(TemplateView):
             if sort == "d":  # sort by date
                 movies = movies.order_by("-date")
 
+        # How many movies did we find?
         movies_count = len(movies)
 
+        # Send the data at the front end
         context.update(
             {
                 "user": user,
@@ -68,31 +69,36 @@ class Index(TemplateView):
         return context
 
 
+# Sign Up form
 class Register(CreateView):
     form_class = RegisterForm
     success_url = reverse_lazy("login")
     template_name = "registration/register.html"
 
 
-class MovieCreateView(CreateView):
+# Create new movie form
+class MovieCreateView(LoginRequiredMixin, CreateView):
     model = Movie
     fields = ["title", "description"]
 
+    # Set the user field in the mvie as the current user
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
+    # Redirect to the home page when a new movie is created
     def get_success_url(self):
         return reverse("index")
 
 
+# Vote for a movie
 def movie_vote(request):
     if request.method == "POST":
         user = request.user
         vote_type = request.POST.get("vote_type")
         movie_id = request.POST.get("movie_id")
-        print(f"{movie_id = }")
 
+        # What type of vote are we casting?
         if vote_type == "like":
             vote = True
         else:
@@ -116,13 +122,14 @@ def movie_vote(request):
             modification = "deleted"
             current_opinion = None
 
+        # Get Likes / Hates counts
         movie_opinions = Opinion.objects.filter(movie__id=movie_id)
-
         movie_opinions_df = pd.DataFrame.from_records(
             movie_opinions.values(), columns=["id", "movie_id", "user_id", "like"]
         )
         counts = movie_opinions_df["like"].value_counts()
 
+        # Send the data at the frontend
         response_data = {}
         response_data["movie_id"] = movie_id
         response_data["likes_count"] = str(counts.get(True, 0))

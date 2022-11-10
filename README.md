@@ -34,9 +34,31 @@ Navigate in the project folder.
 cd MovieWorld
 ```
 
+Run the tests to ensure that everything works as expected.
+```
+python manage.py  test
+```
+
 Start the development server.
 ```
 python manage.py runserver
 ```
 
 Open a browser at ```http://127.0.0.1:8000/```
+
+
+Demo credentials:
+
+Admin account. You can also access the backend at ```http://127.0.0.1:8000/admin```
+
+```
+admin
+123456
+```
+
+Regular user.
+```
+user1
+xewvXAUpkr7yF8e
+
+```
